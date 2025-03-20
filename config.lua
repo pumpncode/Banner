@@ -1,3 +1,4 @@
 return {
-	disabled_keys = {}
+	disabled_keys = {},
+	left_click = false,
 }

@@ -84,6 +84,17 @@ position = 'before'
 match_indent = true
 payload = "elseif _type == 'Seal' then _pool[#_pool + 1] = \"Purple\" -- Banner default"
 
+# Check card click for left-click option
+[[patches]]
+[patches.pattern]
+target = 'card.lua'
+pattern = 'function Card:click()'
+position = 'after'
+match_indent = true
+payload = '''
+	if BANNERMOD.config.left_click and BANNERMOD.handle_collection_click_card(self) then return end
+'''
+
 # Disable debuffed tooltip in collection
 [[patches]]
 [patches.pattern]

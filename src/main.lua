@@ -82,3 +82,18 @@ function mod.apply_editions(options)
 	end
 	return new_options
 end
+
+mod.base.config_tab = function()
+    return {n = G.UIT.ROOT, config = {r = 0.1, minw = 4, align = "tm", padding = 0.2, colour = G.C.BLACK}, nodes = {
+        {n = G.UIT.C, config = {r = 0.1, minw = 4, align = "tc", padding = 0.2, colour = G.C.BLACK}, nodes = {
+            {n = G.UIT.R, config = {align = "cm", r = 0.1, padding = 0.2}, nodes = {
+				create_toggle({
+					label = localize("c_bannermod_left_click"),
+					ref_table = mod.config,
+					ref_value = 'left_click',
+					callback = function() SMODS.save_mod_config(mod.base) end
+				}),
+			}},
+		}},
+    }}
+end

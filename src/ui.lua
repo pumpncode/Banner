@@ -14,17 +14,14 @@ local function get_key(obj)
 	end
 end
 
-local function handle_collection_right_click_cards()
-	if not G.your_collection then return false end
-
-	local hover_target = G.CONTROLLER.cursor_hover.target
-	if not hover_target or not hover_target:is(Card) then
+function mod.handle_collection_click_card(card)
+	if not G.your_collection then
 		return false
 	end
 
 	local in_collection = false
 	for _, area in ipairs(G.your_collection) do
-		if not area.REMOVED and hover_target.area == area then
+		if not area.REMOVED and card.area == area then
 			in_collection = true
 			break
 		end
@@ -33,20 +30,20 @@ local function handle_collection_right_click_cards()
 		return false
 	end
 
-	hover_target:juice_up(0.3, 0.3)
+	card:juice_up(0.3, 0.3)
 
-	local key = get_key(hover_target)
+	local key = get_key(card)
 
 	if mod.is_disabled(key) then
 		play_sound('generic1')
 		if mod.set_disabled(key, false) then
-			hover_target.debuff = false
+			card.debuff = false
 		end
 	else
 		play_sound('cancel')
 		if mod.set_disabled(key, true) then
-			hover_target.debuff = true
-			hover_target.bannermod_no_debuff_tip = true
+			card.debuff = true
+			card.bannermod_no_debuff_tip = true
 		end
 	end
 
@@ -57,25 +54,24 @@ local function handle_collection_right_click_cards()
 	return true
 end
 
-local function handle_collection_right_click_tags()
-	local hover_target = G.CONTROLLER.cursor_hover.target
-	if not hover_target or not hover_target:is(Sprite) or not hover_target.bannermod_in_collection then
+function mod.handle_collection_click_tag(tag)
+	if not tag.bannermod_in_collection then
 		return false
 	end
 
-	hover_target:juice_up(0.3, 0.3)
+	tag:juice_up(0.3, 0.3)
 
-	local key = get_key(hover_target)
+	local key = get_key(tag)
 
 	if mod.is_disabled(key) then
 		play_sound('generic1')
 		if mod.set_disabled(key, false) then
-			hover_target.bannermod_disabled = false
+			tag.bannermod_disabled = false
 		end
 	else
 		play_sound('cancel')
 		if mod.set_disabled(key, true) then
-			hover_target.bannermod_disabled = true
+			tag.bannermod_disabled = true
 		end
 	end
 
@@ -91,12 +87,21 @@ local function handle_collection_right_click()
 		return false
 	end
 
+	local hover_target = G.CONTROLLER.cursor_hover.target
+
 	local tags_e = G.OVERLAY_MENU:get_UIE_by_ID('your_collection_tags_contents')
 
 	if tags_e and not tags_e.REMOVED then
-		return handle_collection_right_click_tags()
+		if not hover_target or not hover_target:is(Sprite) then
+			return false
+		end
+		return mod.handle_collection_click_tag(hover_target)
+
 	elseif G.your_collection then
-		return handle_collection_right_click_cards()
+		if not hover_target or not hover_target:is(Card) then
+			return false
+		end
+		return mod.handle_collection_click_card(hover_target)
 	end
 end
 
@@ -124,7 +129,7 @@ end
 
 local orig_Controller_queue_R_cursor_press = Controller.queue_R_cursor_press
 function Controller:queue_R_cursor_press(x, y, ...)
-	if handle_collection_right_click() then return end
+	if not mod.config.left_click and handle_collection_right_click() then return end
 	orig_Controller_queue_R_cursor_press(self, x, y, ...)
 end
 
@@ -272,9 +277,13 @@ local function build_collection_sidebar()
 
 	mod.view_sidebar_tally = {text = count..' / '..total}
 
+	local directions_key = mod.config.left_click and
+		'k_bannermod_directions_left' or
+		'k_bannermod_directions_right'
+
 	local nodes = {
 		simple_text_container('k_bannermod_name', {colour = G.C.UI.TEXT_LIGHT, scale = 0.4}),
-		simple_text_container('k_bannermod_directions', {colour = G.C.JOKER_GREY}),
+		simple_text_container(directions_key, {colour = G.C.JOKER_GREY}),
 		{n=G.UIT.R, config={align = "cm", minh = 0.4}, nodes={
 			{n=G.UIT.T, config={ref_table = mod.view_sidebar_tally, ref_value = 'text', scale = 0.35, colour = G.C.UI.TEXT_LIGHT, no_recalc = true}}
 		}},
@@ -421,6 +430,15 @@ function Tag:generate_UI(_size, ...)
 
 			_self:draw_shader('debuff', nil, send_to_shader)
 		end
+	end
+
+	local orig_sprite_click = sprite.click
+	function sprite.click(_self)
+		if mod.config.left_click and mod.handle_collection_click_tag(_self) then
+			return
+		end
+
+		orig_sprite_click(_self)
 	end
 
 	return tab, sprite
