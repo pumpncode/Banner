@@ -1,8 +1,8 @@
-# House Rules
+# Banner
 
 A Balatro mod to disable specific Jokers, consumables, and more from randomly appearing in-game.
 
-![Game Screenshot](https://i.imgur.com/2xg1HTD.png)
+![Game Screenshot](https://i.imgur.com/7ZBc51i.png)
 
 In the collection, you can right-click on an item to **disable** it, or you can press **Disable All** to disable **all** cards in the selected category (or every category, if you're in the main collection screen).
 

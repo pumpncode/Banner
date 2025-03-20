@@ -1,14 +1,14 @@
 return {
 	misc = {
 		dictionary = {
-			k_houserules_name = {"House Rules"},
-			k_houserules_directions = {
+			k_bannermod_name = {"Banner"},
+			k_bannermod_directions = {
 				"Right-Click",
 				"a Card to",
 				"Disable it"
 			},
-			b_houserules_enable_all = {"Enable All"},
-			b_houserules_disable_all = {"Disable All"},
+			b_bannermod_enable_all = {"Enable All"},
+			b_bannermod_disable_all = {"Disable All"},
 		}
 	}
 }

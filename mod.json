@@ -1,12 +1,12 @@
 {
-	"id": "houserules",
-	"name": "House Rules",
+	"id": "banner",
+	"name": "Banner",
 	"author": ["SylviBlossom"],
 	"description": "Configure which cards can appear in a run",
-	"prefix": "houserules",
+	"prefix": "bannermod",
 	"main_file": "src/main.lua",
 	"dependencies": [
 		"Steamodded (>=1.*)"
 	],
-	"version": "1.0.0"
+	"version": "1.0.1"
 }

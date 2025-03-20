@@ -1,4 +1,4 @@
-local mod = HOUSERULES
+local mod = BANNERMOD
 
 local function get_key(obj)
 	if mod.viewed_collection_pool_ref == G.P_CENTER_POOLS.Seal then
@@ -46,7 +46,7 @@ local function handle_collection_right_click_cards()
 		play_sound('cancel')
 		if mod.set_disabled(key, true) then
 			hover_target.debuff = true
-			hover_target.houserules_no_debuff_tip = true
+			hover_target.bannermod_no_debuff_tip = true
 		end
 	end
 
@@ -59,7 +59,7 @@ end
 
 local function handle_collection_right_click_tags()
 	local hover_target = G.CONTROLLER.cursor_hover.target
-	if not hover_target or not hover_target:is(Sprite) or not hover_target.houserules_in_collection then
+	if not hover_target or not hover_target:is(Sprite) or not hover_target.bannermod_in_collection then
 		return false
 	end
 
@@ -70,12 +70,12 @@ local function handle_collection_right_click_tags()
 	if mod.is_disabled(key) then
 		play_sound('generic1')
 		if mod.set_disabled(key, false) then
-			hover_target.houserules_disabled = false
+			hover_target.bannermod_disabled = false
 		end
 	else
 		play_sound('cancel')
 		if mod.set_disabled(key, true) then
-			hover_target.houserules_disabled = true
+			hover_target.bannermod_disabled = true
 		end
 	end
 
@@ -106,16 +106,16 @@ function mod.debuff_collection_page()
 			for _, v in ipairs(G.your_collection[i].cards) do
 				if mod.is_disabled(get_key(v)) then
 					v.debuff = true
-					v.houserules_no_debuff_tip = true
+					v.bannermod_no_debuff_tip = true
 				end
 			end
 		end
 
 	elseif mod.view_type == "tags" then
 		for _, v in pairs(G.I.SPRITE) do
-			if v.config and v.config.tag and v.houserules_in_collection then
+			if v.config and v.config.tag and v.bannermod_in_collection then
 				if mod.is_disabled(get_key(v)) then
-					v.houserules_disabled = true
+					v.bannermod_disabled = true
 				end
 			end
 		end
@@ -157,7 +157,7 @@ function mod.collection_toggle_all(enable)
 					if card.debuff ~= mod.is_disabled(get_key(card)) then
 						card:juice_up(0.3, 0.3)
 						card.debuff = not enable
-						card.houserules_no_debuff_tip = not enable
+						card.bannermod_no_debuff_tip = not enable
 					end
 				end
 			end
@@ -171,10 +171,10 @@ function mod.collection_toggle_all(enable)
 		end
 
 		for _, v in pairs(G.I.SPRITE) do
-			if v.config and v.config.tag and v.houserules_in_collection then
-				if v.houserules_disabled ~= mod.is_disabled(get_key(v)) then
+			if v.config and v.config.tag and v.bannermod_in_collection then
+				if v.bannermod_disabled ~= mod.is_disabled(get_key(v)) then
 					v:juice_up(0.3, 0.3)
-					v.houserules_disabled = not enable
+					v.bannermod_disabled = not enable
 				end
 			end
 		end
@@ -246,11 +246,11 @@ local function tally_disabled()
 	return count, total
 end
 
-G.FUNCS.houserules_enable_all = function()
+G.FUNCS.bannermod_enable_all = function()
 	mod.collection_toggle_all(true)
 end
 
-G.FUNCS.houserules_disable_all = function()
+G.FUNCS.bannermod_disable_all = function()
 	mod.collection_toggle_all(false)
 end
 
@@ -270,13 +270,13 @@ local function build_collection_sidebar()
 	mod.view_sidebar_tally = {text = count..' / '..total}
 
 	local nodes = {
-		simple_text_container('k_houserules_name', {colour = G.C.UI.TEXT_LIGHT, scale = 0.4}),
-		simple_text_container('k_houserules_directions', {colour = G.C.JOKER_GREY}),
+		simple_text_container('k_bannermod_name', {colour = G.C.UI.TEXT_LIGHT, scale = 0.4}),
+		simple_text_container('k_bannermod_directions', {colour = G.C.JOKER_GREY}),
 		{n=G.UIT.R, config={align = "cm", minh = 0.4}, nodes={
 			{n=G.UIT.T, config={ref_table = mod.view_sidebar_tally, ref_value = 'text', scale = 0.35, colour = G.C.UI.TEXT_LIGHT, no_recalc = true}}
 		}},
-		UIBox_button({button = 'houserules_enable_all', label = localize('b_houserules_enable_all'), scale = 0.35, minw = 1.5, minh = 0.45, colour = G.C.GREEN}),
-		UIBox_button({button = 'houserules_disable_all', label = localize('b_houserules_disable_all'), scale = 0.35, minw = 1.5, minh = 0.45, colour = G.C.RED}),
+		UIBox_button({button = 'bannermod_enable_all', label = localize('b_bannermod_enable_all'), scale = 0.35, minw = 1.5, minh = 0.45, colour = G.C.GREEN}),
+		UIBox_button({button = 'bannermod_disable_all', label = localize('b_bannermod_disable_all'), scale = 0.35, minw = 1.5, minh = 0.45, colour = G.C.RED}),
 	}
 
 	return nodes
@@ -386,7 +386,7 @@ local orig_Card_generate_UIBox_ability_table = Card.generate_UIBox_ability_table
 function Card:generate_UIBox_ability_table(vars_only, ...)
 	local disabled_debuff = false
 
-	if self.debuff and self.houserules_no_debuff_tip then
+	if self.debuff and self.bannermod_no_debuff_tip then
 		self.debuff = false
 		disabled_debuff = true
 	end
@@ -408,7 +408,7 @@ function Tag:generate_UI(_size, ...)
 	function sprite.draw(_self)
 		orig_sprite_draw(_self)
 
-		if _self.houserules_disabled then
+		if _self.bannermod_disabled then
 			local tilt_var = _self.role.draw_major or _self
 
 			local send_to_shader = {

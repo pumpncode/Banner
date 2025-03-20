@@ -10,7 +10,7 @@ target = 'game.lua'
 pattern = 'G:save_settings()'
 position = 'before'
 match_indent = true
-payload = 'HOUSERULES.setup_game(not saveTable)'
+payload = 'BANNERMOD.setup_game(not saveTable)'
 
 # Remove disabled editions from poll_edition
 [[patches]]
@@ -19,7 +19,7 @@ target = '=[SMODS _ "src/overrides.lua"]'
 pattern = 'for _, v in ipairs(_options) do'
 position = 'before'
 match_indent = true
-payload = '_options = HOUSERULES.apply_editions(_options)'
+payload = '_options = BANNERMOD.apply_editions(_options)'
 
 # Remove disabled enhancements from specific "create enhanced cards" effects
 [[patches]]
@@ -29,7 +29,7 @@ pattern = 'cen_pool[#cen_pool+1] = v'
 position = 'after'
 match_indent = true
 payload = '''
-if G.GAME.houserules_disabled[v.key] then
+if G.GAME.bannermod_disabled[v.key] then
 	cen_pool[#cen_pool] = nil
 end
 '''
@@ -40,7 +40,7 @@ pattern = 'cen_pool[#cen_pool + 1] = v'
 position = 'after'
 match_indent = true
 payload = '''
-if G.GAME.houserules_disabled[v.key] then
+if G.GAME.bannermod_disabled[v.key] then
 	cen_pool[#cen_pool] = nil
 end
 '''
@@ -52,7 +52,7 @@ pattern = 'cen_pool[#cen_pool + 1] = v'
 position = 'after'
 match_indent = true
 payload = '''
-if G.GAME.houserules_disabled[v.key] then
+if G.GAME.bannermod_disabled[v.key] then
 	cen_pool[#cen_pool] = nil
 end
 '''
@@ -64,7 +64,7 @@ target = 'functions/common_events.lua'
 pattern = "local _, boss = pseudorandom_element(eligible_bosses, pseudoseed('boss'))"
 position = 'after'
 match_indent = true
-payload = 'boss = boss or "bl_wall" -- House Rules default'
+payload = 'boss = boss or "bl_wall" -- Banner default'
 
 # Make enhancements default to a Base card instead of Joker
 [[patches]]
@@ -73,7 +73,7 @@ target = 'functions/common_events.lua'
 pattern = 'else _pool[#_pool + 1] = "j_joker"'
 position = 'before'
 match_indent = true
-payload = "elseif _type == 'Enhanced' then _pool[#_pool + 1] = \"c_base\" -- House Rules default"
+payload = "elseif _type == 'Enhanced' then _pool[#_pool + 1] = \"c_base\" -- Banner default"
 
 # Make seals default to Purple Seal instead of Joker
 [[patches]]
@@ -82,7 +82,7 @@ target = 'functions/common_events.lua'
 pattern = 'else _pool[#_pool + 1] = "j_joker"'
 position = 'before'
 match_indent = true
-payload = "elseif _type == 'Seal' then _pool[#_pool + 1] = \"Purple\" -- House Rules default"
+payload = "elseif _type == 'Seal' then _pool[#_pool + 1] = \"Purple\" -- Banner default"
 
 # Disable debuffed tooltip in collection
 [[patches]]
@@ -92,7 +92,7 @@ pattern = 'local debuffed = card.debuff'
 position = 'after'
 match_indent = true
 payload = '''
-if debuffed and card.houserules_no_debuff_tip then
+if debuffed and card.bannermod_no_debuff_tip then
 	debuffed = false
 end
 '''
@@ -102,7 +102,7 @@ target = 'functions/common_events.lua'
 pattern = "\\(card and card\\.debuff(?<a>)"
 position = 'at'
 root_capture = 'a'
-payload = 'and not card.houserules_no_debuff_tip'
+payload = 'and not card.bannermod_no_debuff_tip'
 
 # Add variable to collection tag sprites to check whether they're in the collection
 [[patches]]
@@ -112,6 +112,6 @@ pattern = 'local temp_tag_ui, temp_tag_sprite = temp_tag:generate_UI()'
 position = 'after'
 match_indent = true
 payload = '''
-temp_tag_sprite.houserules_in_collection = true
-temp_tag_sprite.houserules_disabled = false
+temp_tag_sprite.bannermod_in_collection = true
+temp_tag_sprite.bannermod_disabled = false
 '''
