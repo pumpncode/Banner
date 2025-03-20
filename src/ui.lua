@@ -179,7 +179,7 @@ function mod.collection_toggle_all(enable)
 			end
 		end
 
-	elseif mod.view_type == "main" or mod.view_type == "main_mod" then
+	elseif mod.view_type == "main_mod" or (mod.view_type == "main" and not enable) then
 		local mod_check = mod.view_type == "main_mod"
 
 		for k, v in pairs(G.P_CENTERS) do
@@ -198,10 +198,13 @@ function mod.collection_toggle_all(enable)
 			end
 		end
 		for k, v in pairs(G.P_TAGS) do
-			if not v.no_collection and (not mod_check or (v.mod and v.mod.id == mod.viewed_mod.id)) then 
+			if not v.no_collection and (not mod_check or (v.mod and v.mod.id == mod.viewed_mod.id)) then
 				mod.set_disabled(v.key, not enable)
 			end
 		end
+
+	elseif mod.view_type == "main" and enable then
+		mod.config.disabled_keys = {}
 	end
 
 	mod.save_disabled()
