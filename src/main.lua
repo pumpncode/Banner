@@ -1,0 +1,84 @@
+HOUSERULES = {
+	base = SMODS.current_mod,
+	id = SMODS.current_mod.id,
+	config = SMODS.current_mod.config
+}
+
+assert(SMODS.load_file("src/ui.lua"))()
+
+SMODS.Atlas({
+	key = "modicon",
+	path = "modicon.png",
+	px = 34,
+	py = 34
+})
+
+local mod = HOUSERULES
+
+mod.locked_keys = {
+	["c_base"] = true,
+	["soul"] = true,
+	["undiscovered_joker"] = true,
+	["undiscovered_tarot"] = true,
+	["e_base"] = true,
+	["bl_small"] = true,
+	["bl_big"] = true,
+}
+
+function mod.set_disabled(key, value)
+	if mod.locked_keys[key] then
+		return false
+	end
+
+	if not value then
+		value = nil
+	end
+
+	mod.config.disabled_keys[key] = value
+
+	return true
+end
+
+function mod.is_disabled(key)
+	return mod.config.disabled_keys[key] or false
+end
+
+function mod.update_disabled()
+	if not G.GAME then return end
+
+	if G.GAME.houserules_disabled then
+		for k, v in pairs(G.GAME.houserules_disabled) do
+			if v then G.GAME.banned_keys[k] = G.GAME.houserules_last_banned[k] end
+		end
+	end
+
+	G.GAME.houserules_disabled = {}
+	G.GAME.houserules_last_banned = {}
+
+	for k, v in pairs(mod.config.disabled_keys) do
+		if v then
+			G.GAME.houserules_disabled[k] = true
+			G.GAME.houserules_last_banned[k] = G.GAME.banned_keys[k]
+			G.GAME.banned_keys[k] = true
+		end
+	end
+end
+
+function mod.save_disabled()
+	SMODS.save_mod_config(mod.base)
+end
+
+function mod.setup_game(new)
+	mod.update_disabled()
+end
+
+function mod.apply_editions(options)
+	local new_options = {}
+	for _, v in ipairs(options) do
+		local key = type(v) == "table" and v.name or v
+		if not G.GAME.houserules_disabled[key] then
+			table.insert(new_options, v)
+		end
+	end
+	return new_options
+end
