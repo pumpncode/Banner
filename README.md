@@ -2,7 +2,7 @@
 
 A Balatro mod to disable specific Jokers, consumables, and more from randomly appearing in-game.
 
-![](https://i.imgur.com/2xg1HTD.png)
+![Game Screenshot](https://i.imgur.com/2xg1HTD.png)
 
 In the collection, you can right-click on an item to **disable** it, or you can press **Disable All** to disable **all** cards in the selected category (or every category, if you're in the main collection screen).
 
@@ -12,6 +12,6 @@ Using this mod, nearly all content from installed mods can be cherry-picked, if 
 
 - Download and Install [Steamodded](https://github.com/Steamodded/smods/wiki)
 - Download the source code from the most up-to-date commit here:
-[image]
+![Code -> Downloads](https://i.imgur.com/a9Yapnr.png)
 - Extract the **folder inside the zip** into your `Mods` folder, alongside Steamodded (smods)
 - Balatro
