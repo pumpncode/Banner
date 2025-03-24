@@ -73,6 +73,9 @@ function mod.setup_game(new)
 end
 
 function mod.apply_editions(options)
+	if not G.GAME or not G.GAME.bannermod_disabled then
+		return options
+	end
 	local new_options = {}
 	for _, v in ipairs(options) do
 		local key = type(v) == "table" and v.name or v
