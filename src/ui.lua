@@ -14,8 +14,24 @@ local function get_key(obj)
 	end
 end
 
+function mod.check_compatibility()
+	local list = {}
+
+	if mod.view_type == "blinds" then
+		if next(SMODS.find_mod("ADeckCreatorModule")) then
+			table.insert(list, "Deck Creator")
+		end
+	end
+
+	return #list == 0, list
+end
+
 function mod.handle_collection_click_card(card)
 	if not G.your_collection then
+		return false
+	end
+
+	if not mod.check_compatibility() then
 		return false
 	end
 
@@ -56,6 +72,10 @@ end
 
 function mod.handle_collection_click_tag(tag)
 	if not tag.bannermod_in_collection then
+		return false
+	end
+
+	if not mod.check_compatibility() then
 		return false
 	end
 
@@ -106,6 +126,10 @@ local function handle_collection_right_click()
 end
 
 function mod.debuff_collection_page()
+	if not mod.check_compatibility() then
+		return
+	end
+
 	if mod.view_type == "cards" or mod.view_type == "blinds" then
 		for i = 1, #G.your_collection do
 			for _, v in ipairs(G.your_collection[i].cards) do
@@ -273,25 +297,43 @@ function mod.rebuild_collection_sidebar()
 end
 
 local function build_collection_sidebar()
-	local count, total = tally_disabled()
+	local compatibile, incompatible_list = mod.check_compatibility()
 
-	mod.view_sidebar_tally = {text = count..' / '..total}
+	if compatibile then
+		local count, total = tally_disabled()
 
-	local directions_key = mod.config.left_click and
-		'k_bannermod_directions_left' or
-		'k_bannermod_directions_right'
+		mod.view_sidebar_tally = {text = count..' / '..total}
 
-	local nodes = {
-		simple_text_container('k_bannermod_name', {colour = G.C.UI.TEXT_LIGHT, scale = 0.4}),
-		simple_text_container(directions_key, {colour = G.C.JOKER_GREY}),
-		{n=G.UIT.R, config={align = "cm", minh = 0.4}, nodes={
-			{n=G.UIT.T, config={ref_table = mod.view_sidebar_tally, ref_value = 'text', scale = 0.35, colour = G.C.UI.TEXT_LIGHT, no_recalc = true}}
-		}},
-		UIBox_button({button = 'bannermod_enable_all', label = localize('b_bannermod_enable_all'), scale = 0.35, minw = 1.5, minh = 0.45, colour = G.C.GREEN}),
-		UIBox_button({button = 'bannermod_disable_all', label = localize('b_bannermod_disable_all'), scale = 0.35, minw = 1.5, minh = 0.45, colour = G.C.RED}),
-	}
+		local directions_key = mod.config.left_click and
+			'k_bannermod_directions_left' or
+			'k_bannermod_directions_right'
 
-	return nodes
+		return {
+			simple_text_container('k_bannermod_name', {colour = G.C.UI.TEXT_LIGHT, scale = 0.4}),
+			simple_text_container(directions_key, {colour = G.C.JOKER_GREY}),
+			{n=G.UIT.R, config={align = "cm", minh = 0.4}, nodes={
+				{n=G.UIT.T, config={ref_table = mod.view_sidebar_tally, ref_value = 'text', scale = 0.35, colour = G.C.UI.TEXT_LIGHT, no_recalc = true}}
+			}},
+			UIBox_button({button = 'bannermod_enable_all', label = localize('b_bannermod_enable_all'), scale = 0.35, minw = 1.5, minh = 0.45, colour = G.C.GREEN}),
+			UIBox_button({button = 'bannermod_disable_all', label = localize('b_bannermod_disable_all'), scale = 0.35, minw = 1.5, minh = 0.45, colour = G.C.RED}),
+		}
+	else
+		local name_nodes = {
+			{n=G.UIT.R, config={align = "cm", padding = 0}, nodes={
+				{n=G.UIT.T, config={text = localize('k_bannermod_incompatible'), scale = 0.35, colour = G.C.JOKER_GREY}}
+			}}
+		}
+		for _, v in ipairs(incompatible_list) do
+			table.insert(name_nodes, {n=G.UIT.R, config={align = "cm", padding = 0}, nodes={
+				{n=G.UIT.T, config={text = v, scale = 0.35, colour = G.C.JOKER_GREY}}
+			}})
+		end
+
+		return {
+			simple_text_container('k_bannermod_name', {colour = G.C.UI.TEXT_LIGHT, scale = 0.4}),
+			{n=G.UIT.R, config={align = "cm", padding = 0.03, minh = 0.4}, nodes=name_nodes}
+		}
+	end
 end
 
 local function hook_your_collection(f, tf, view_type)

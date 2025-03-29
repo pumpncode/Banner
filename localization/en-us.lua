@@ -10,6 +10,7 @@ return {
 				"Left-Click a",
 				"card to Ban it"
 			},
+			k_bannermod_incompatible = "Incompatible with",
 			b_bannermod_enable_all = {"Enable All"},
 			b_bannermod_disable_all = {"Disable All"},
 
