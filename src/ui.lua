@@ -102,16 +102,57 @@ function mod.handle_collection_click_tag(tag)
 	return true
 end
 
-local function handle_collection_right_click()
+function mod.handle_collection_click_poker_hand(hover_target)
+	if not mod.check_compatibility() then
+		return false
+	end
+
+	local key = nil
+
+	for handname, ui_definition in pairs(mod.poker_hand_ui_rows) do
+		if hover_target.config == ui_definition.config then
+			key = handname
+			break
+		end
+	end
+
+	if not key then
+		return false
+	end
+
+	if mod.is_disabled(key) then
+		play_sound('generic1')
+		if mod.set_disabled(key, false) then
+			mod.update_poker_hand_ref_text(key)
+		end
+	else
+		play_sound('cancel')
+		if mod.set_disabled(key, true) then
+			mod.update_poker_hand_ref_text(key)
+		end
+	end
+
+	mod.save_disabled()
+	mod.update_disabled()
+	mod.rebuild_collection_sidebar()
+
+	return true
+end
+
+function mod.handle_collection_right_click()
 	if G.CONTROLLER.locks.frame or not G.OVERLAY_MENU or G.OVERLAY_MENU.REMOVED then
 		return false
 	end
 
 	local hover_target = G.CONTROLLER.cursor_hover.target
 
-	local tags_e = G.OVERLAY_MENU:get_UIE_by_ID('your_collection_tags_contents')
+	if mod.view_type == "hands" then
+		if not hover_target or not hover_target.config then
+			return false
+		end
+		return mod.handle_collection_click_poker_hand(hover_target)
 
-	if tags_e and not tags_e.REMOVED then
+	elseif mod.view_type == "tags" then
 		if not hover_target or not hover_target:is(Sprite) then
 			return false
 		end
@@ -151,23 +192,32 @@ function mod.debuff_collection_page()
 	end
 end
 
-local orig_Controller_queue_R_cursor_press = Controller.queue_R_cursor_press
-function Controller:queue_R_cursor_press(x, y, ...)
-	if not mod.config.left_click and handle_collection_right_click() then return end
-	orig_Controller_queue_R_cursor_press(self, x, y, ...)
+function mod.create_poker_hand_ref_table(handname, default)
+	mod.poker_hand_ui_ref_tables = mod.poker_hand_ui_ref_tables or {}
+
+	local ref_table = {text = default, default = default}
+
+	mod.poker_hand_ui_ref_tables[handname] = ref_table
+
+	mod.update_poker_hand_ref_text(handname)
+
+	return ref_table
 end
 
-local orig_INIT_COLLECTION_CARD_ALERTS = INIT_COLLECTION_CARD_ALERTS
-function INIT_COLLECTION_CARD_ALERTS(...)
-	orig_INIT_COLLECTION_CARD_ALERTS(...)
-	mod.debuff_collection_page()
-end
+function mod.update_poker_hand_ref_text(handname)
+	mod.poker_hand_ui_ref_tables = mod.poker_hand_ui_ref_tables or {}
 
-local orig_G_FUNCS_your_collection_blinds_page = G.FUNCS.your_collection_blinds_page
-function G.FUNCS.your_collection_blinds_page(args, ...)
-	local result = orig_G_FUNCS_your_collection_blinds_page(args, ...)
-	mod.debuff_collection_page()
-	return result
+	local ref_table = mod.poker_hand_ui_ref_tables[handname]
+
+	if ref_table == nil then
+		return
+	end
+
+	if mod.is_disabled(handname) then
+		ref_table.text = "Banned"
+	else
+		ref_table.text = ref_table.default
+	end
 end
 
 function mod.collection_toggle_all(enable)
@@ -208,6 +258,14 @@ function mod.collection_toggle_all(enable)
 			end
 		end
 
+	elseif mod.view_type == "hands" then
+		for k, v in ipairs(mod.viewed_collection_pool) do
+			if not v.no_collection then
+				mod.set_disabled(v.key, not enable)
+				mod.update_poker_hand_ref_text(v.key)
+			end
+		end
+
 	elseif mod.view_type == "main_mod" or (mod.view_type == "main" and not enable) then
 		local mod_check = mod.view_type == "main_mod"
 
@@ -231,6 +289,11 @@ function mod.collection_toggle_all(enable)
 				mod.set_disabled(v.key, not enable)
 			end
 		end
+		for k, v in pairs(SMODS.PokerHands) do
+			if not v.no_collection and (not mod_check or (v.mod and v.mod.id == mod.viewed_mod.id)) then
+				mod.set_disabled(v.key, not enable)
+			end
+		end
 
 	elseif mod.view_type == "main" and enable then
 		mod.config.disabled_keys = {}
@@ -245,7 +308,7 @@ local function tally_disabled()
 	local total = 0
 	local count = 0
 
-	if mod.view_type == "cards" or mod.view_type == "blinds" or mod.view_type == "tags" then
+	if mod.view_type == "cards" or mod.view_type == "blinds" or mod.view_type == "tags" or mod.view_type == "hands" then
 		for k, v in ipairs(mod.viewed_collection_pool) do
 			if not v.no_collection and not mod.locked_keys[v.key] then
 				total = total + 1
@@ -273,6 +336,7 @@ local function tally_disabled()
 		tally_in_pool(G.P_SEALS)
 		tally_in_pool(G.P_BLINDS)
 		tally_in_pool(G.P_TAGS)
+		tally_in_pool(SMODS.PokerHands)
 	end
 
 	return count, total
@@ -296,7 +360,7 @@ function mod.rebuild_collection_sidebar()
 	mod.view_sidebar_tally.text = count..' / '..total
 end
 
-local function build_collection_sidebar()
+function mod.build_collection_sidebar()
 	local compatibile, incompatible_list = mod.check_compatibility()
 
 	if compatibile then
@@ -353,6 +417,9 @@ local function hook_your_collection(f, tf, view_type)
 		elseif mod.view_type == "tags" then
 			mod.viewed_collection_pool = SMODS.collection_pool(G.P_TAGS)
 			mod.viewed_collection_pool_ref = G.P_TAGS
+		elseif mod.view_type == "hands" then
+		    mod.viewed_collection_pool = SMODS.collection_pool(SMODS.PokerHands)
+			mod.viewed_collection_pool_ref = SMODS.PokerHands
 		else
 			mod.viewed_collection_pool = nil
 			mod.viewed_collection_pool_ref = nil
@@ -366,7 +433,7 @@ local function hook_your_collection(f, tf, view_type)
 				return {n=G.UIT.R, config={align = "cm", padding = 0.1}, nodes={
 					{n=G.UIT.C, config={align = "cm"}, nodes={
 						{n=G.UIT.R, config={align = "cm", minh = 1,r = 0.3, padding = 0.07, minw = 1, colour = G.C.JOKER_GREY, emboss = 0.1}, nodes={
-							{n=G.UIT.C, config={align = "cm", minh = 1,r = 0.2, padding = 0.2, minw = 1, colour = G.C.L_BLACK}, nodes=build_collection_sidebar()},
+							{n=G.UIT.C, config={id="bannermod_sidebar", align = "cm", minh = 1,r = 0.2, padding = 0.2, minw = 1, colour = G.C.L_BLACK}, nodes=mod.build_collection_sidebar()},
 						}},
 					}},
 					{n=G.UIT.C, config={align = "cm"}, nodes={
@@ -388,6 +455,7 @@ local basic_hooks = {
 	{"create_UIBox_your_collection_decks",          ""},
 	{"create_UIBox_your_collection_tags_content",   "tags"},
 	{"create_UIBox_your_collection_consumables",    ""},
+	{"create_UIBox_your_collection_poker_hands",    "hands"},
 	{"create_UIBox_Other_GameObjects",              ""},
 }
 for _, v in ipairs(basic_hooks) do
@@ -403,85 +471,3 @@ SMODS.card_collection_UIBox = hook_your_collection(SMODS.card_collection_UIBox, 
 		t.nodes[1] = f(t.nodes[1])
 	end
 end)
-
-local orig_buildAdditionsTab = buildAdditionsTab
-function buildAdditionsTab(_mod, ...)
-	local result = orig_buildAdditionsTab(_mod, ...)
-
-	if result and result.tab_definition_function then
-		local orig_func = result.tab_definition_function
-
-		result.tab_definition_function = function()
-			local t = orig_func()
-			if not t then return end
-
-			mod.view_type = "main_mod"
-			mod.viewed_mod = _mod
-			mod.viewed_collection_pool = nil
-			mod.viewed_collection_pool_ref = nil
-
-			t.n = G.UIT.R
-			t.config.align = "cm"
-			return {n=G.UIT.ROOT, config={align = "tm", padding = 0.1, colour = G.C.CLEAR}, nodes={
-				{n=G.UIT.C, config={align = "cm"}, nodes={
-					{n=G.UIT.C, config={emboss = 0.05, minh = 1, r = 0.1, minw = 1, align = "cm", padding = 0.2, colour = G.C.BLACK}, nodes=build_collection_sidebar()}
-				}},
-				{n=G.UIT.C, config={align = "cm"}, nodes={
-					t
-				}},
-			}}
-		end
-	end
-
-	return result
-end
-
-local orig_Card_generate_UIBox_ability_table = Card.generate_UIBox_ability_table
-function Card:generate_UIBox_ability_table(vars_only, ...)
-	local disabled_debuff = false
-
-	if self.debuff and self.bannermod_no_debuff_tip then
-		self.debuff = false
-		disabled_debuff = true
-	end
-
-	local results = {orig_Card_generate_UIBox_ability_table(self, vars_only, ...)}
-
-	if disabled_debuff then
-		self.debuff = true
-	end
-
-	return unpack(results)
-end
-
-local orig_Tag_generate_UI = Tag.generate_UI
-function Tag:generate_UI(_size, ...)
-	local tab, sprite = orig_Tag_generate_UI(self, _size, ...)
-
-	local orig_sprite_draw = sprite.draw
-	function sprite.draw(_self)
-		orig_sprite_draw(_self)
-
-		if _self.bannermod_disabled then
-			local tilt_var = _self.role.draw_major or _self
-
-			local send_to_shader = {
-				math.min(_self.VT.r*3, 1) + G.TIMERS.REAL/(28) + (_self.juice and _self.juice.r*20 or 0),
-				G.TIMERS.REAL
-			}
-
-			_self:draw_shader('debuff', nil, send_to_shader)
-		end
-	end
-
-	local orig_sprite_click = sprite.click
-	function sprite.click(_self)
-		if mod.config.left_click and mod.handle_collection_click_tag(_self) then
-			return
-		end
-
-		orig_sprite_click(_self)
-	end
-
-	return tab, sprite
-end

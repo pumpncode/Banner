@@ -44,7 +44,7 @@ if G.GAME.bannermod_disabled[v.key] then
 	cen_pool[#cen_pool] = nil
 end
 '''
-# Cryptid overwrites this too I guess !!
+# Handle mods overwriting it too...
 [[patches]]
 [patches.pattern]
 target = '=[SMODS Cryptid "items/stake.lua"]'
@@ -56,8 +56,32 @@ if G.GAME.bannermod_disabled[v.key] then
 	cen_pool[#cen_pool] = nil
 end
 '''
+[[patches]]
+[patches.pattern]
+target = '=[SMODS CelesteCardCollection "lua_files/jokers/uncommon/pointlessmachines.lua"]'
+pattern = 'cen_pool[#cen_pool + 1] = v'
+position = 'after'
+match_indent = true
+payload = '''
+if G.GAME.bannermod_disabled[v.key] then
+	cen_pool[#cen_pool] = nil
+end
+'''
 
-# Make boss blinds default to The Wall if all boss blinds disabled 
+# Prevent evaluating banned poker hands
+[[patches]]
+[patches.pattern]
+target = '=[SMODS _ "src/overrides.lua"]'
+pattern = 'results[k] = _hand.evaluate(parts, hand) or {}'
+position = 'after'
+match_indent = true
+payload = '''
+if G.GAME.bannermod_disabled[k] then
+	results[k] = {}
+end
+'''
+
+# Make boss blinds default to The Wall if all boss blinds disabled
 [[patches]]
 [patches.pattern]
 target = 'functions/common_events.lua'
@@ -126,3 +150,11 @@ payload = '''
 temp_tag_sprite.bannermod_in_collection = true
 temp_tag_sprite.bannermod_disabled = false
 '''
+
+# Dynamically change poker hand level text in collection
+[[patches]]
+[patches.regex]
+target = 'functions/UI_definitions.lua'
+pattern = "text = (?<default>localize\\('k_level_prefix'\\).+), scale"
+position = 'at'
+payload = 'ref_table = BANNERMOD.create_poker_hand_ref_table(handname, $default), ref_value = "text", scale'
