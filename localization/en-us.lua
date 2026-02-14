@@ -14,7 +14,15 @@ return {
 			b_bannermod_enable_all = {"Enable All"},
 			b_bannermod_disable_all = {"Disable All"},
 
-			c_bannermod_left_click = "Left-Click Ban",
+			c_bannermod_left_click = "Left-Click to Ban",
+
+			c_bannermod_limit_poker_hand_scoring = "Limit Scored Poker Hand Cards",
+			c_bannermod_limit_poker_hand_scoring_desc = {
+				"Limits number of scored cards for select",
+				"poker hands if higher versions are banned.",
+				"(Affects Pair, Two Pair, Three of a Kind, Four of a Kind)",
+				"(Does not affect 'always scores' effects)"
+			}
 		}
 	}
 }
